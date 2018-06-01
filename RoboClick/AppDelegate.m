@@ -130,11 +130,10 @@
 - (IBAction)showWelcomeMessage {
 	NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
 	if (![userDefaults boolForKey:@"suppressWelcomeDefault"]) {
-		NSAlert *alert = [NSAlert alertWithMessageText:NSLocalizedString(@"Welcome to RoboClick", nil)
-										 defaultButton:NSLocalizedString(@"OK", nil)
-									   alternateButton:nil
-										   otherButton:nil
-							 informativeTextWithFormat:NSLocalizedString(@"RoboClick runs in the OS X menu bar.\n\nAuto clicking is controlled by the hot keys you assign in the preferences.", nil)];
+        NSAlert *alert = [[NSAlert alloc] init];
+        [alert setMessageText:NSLocalizedString(@"Welcome to RoboClick", nil)];
+        [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+        [alert setInformativeText:NSLocalizedString(@"RoboClick runs in the OS X menu bar.\n\nAuto clicking is controlled by the hot keys you assign in the preferences.", nil)];
 		[alert setShowsSuppressionButton:YES];
 		[alert runModal];
 		if ([[alert suppressionButton] state] == NSOnState) {
@@ -144,10 +143,10 @@
 }
 
 - (void)resetStateOnEventType:(NSEvent*)incomingEvent {
-    if (self.roboAction == RightHold && [incomingEvent type] == NSRightMouseUp) {
+    if (self.roboAction == RightHold && [incomingEvent type] == NSEventTypeRightMouseUp) {
         self.roboAction = None;
         [self resetState];
-    } else if (self.roboAction == LeftHold && [incomingEvent type] == NSLeftMouseUp) {
+    } else if (self.roboAction == LeftHold && [incomingEvent type] == NSEventTypeLeftMouseUp) {
         self.roboAction = None;
         [self resetState];
     }
@@ -160,12 +159,12 @@
  * in hold click mode.
  */
 - (IBAction)beginEventMonitor {
-    [NSEvent addGlobalMonitorForEventsMatchingMask:(NSLeftMouseUpMask | NSRightMouseUpMask) handler:^(NSEvent *incomingEvent) {
+    [NSEvent addGlobalMonitorForEventsMatchingMask:(NSEventMaskLeftMouseUp | NSEventMaskRightMouseUp) handler:^(NSEvent *incomingEvent) {
         [self resetStateOnEventType: incomingEvent];
         
     }];
     
-    [NSEvent addLocalMonitorForEventsMatchingMask:(NSLeftMouseUpMask | NSRightMouseUpMask) handler:^(NSEvent *incomingEvent)  { 
+    [NSEvent addLocalMonitorForEventsMatchingMask:(NSEventMaskLeftMouseUp | NSEventMaskRightMouseUp) handler:^(NSEvent *incomingEvent)  {
         NSEvent *result = incomingEvent;
         
         [self resetStateOnEventType: incomingEvent];
@@ -308,12 +307,11 @@
 }
 
 - (void)alertCannotRepeat:(NSString *)text {
-    NSAlert *alert = [NSAlert alertWithMessageText:NSLocalizedString(@"Failed to Repeat Click", nil)
-                                     defaultButton:NSLocalizedString(@"OK", nil)
-                                   alternateButton:nil
-                                       otherButton:nil
-                         informativeTextWithFormat:@"%@", text];
-    [alert setAlertStyle:NSCriticalAlertStyle];
+    NSAlert *alert = [[NSAlert alloc] init];
+    [alert setMessageText:NSLocalizedString(@"Failed to Repeat Click", nil)];
+    [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+    [alert setInformativeText:text];
+    [alert setAlertStyle:NSAlertStyleCritical];
     [alert runModal];
 }
 
@@ -405,7 +403,7 @@
  * (2) the pid binding option is on and the app's pid under the
  *     mouse does not match the pid we've bound to
  */
-- (void)repeatedClick:(NSPoint(^)())doClickBlock {
+- (void)repeatedClick:(NSPoint(^)(void))doClickBlock {
     NSPoint mouse = [NSEvent mouseLocation];
     
     BOOL pidsMatch = true;
@@ -452,7 +450,7 @@
 }
 
 /* The underlying method for toggling hold clicks. */
-- (void)toggleHoldClick:(RoboAction)action statusItemImage:(NSImage*)statusItemImage clickBlock:(NSPoint(^)())doClickBlock {
+- (void)toggleHoldClick:(RoboAction)action statusItemImage:(NSImage*)statusItemImage clickBlock:(NSPoint(^)(void))doClickBlock {
     [[self window] makeFirstResponder:nil];
     [repeatClickTimer invalidate];
     
